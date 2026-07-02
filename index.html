@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSYCHE MATRIX // ARCHIVE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Noto+Sans+Bengali:wght@300;400;700&family=Creepster&family=Nosifer&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #030303;
+            --panel-bg: #0a0a0a;
+            --primary-glow: #00ff66;
+            --secondary-glow: #00e5ff;
+            --danger-glow: #ff003c;
+            --purple-glow: #9400d3;
+            --text-color: #8b949e;
+            --text-bright: #c9d1d9;
+            --border-color: #1a1a1a;
+            --bone-white: #e0e0e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Share Tech Mono', 'Noto Sans Bengali', monospace;
+            overflow-x: hidden;
+            line-height: 1.6;
+            cursor: crosshair;
+        }
+
+        /* ==================== BACKGROUND EFFECTS ==================== */
+        #matrix-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            opacity: 0.12;
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.3;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.9) 100%);
+            pointer-events: none;
+            z-index: 9997;
+        }
+
+        .blood-drip {
+            position: fixed;
+            top: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, transparent, #8b0000, #ff0000);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 9996;
+            animation: drip 8s infinite ease-in;
+        }
+
+        @keyframes drip {
+            0% { height: 0; opacity: 0; }
+            20% { height: 100px; opacity: 0.5; }
+            100% { height: 300px; opacity: 0; top: 100%; }
+        }
+
+        /* ==================== CURSOR TRAIL ==================== */
+        .cursor-dot {
+            position: fixed;
+            width: 8px; height: 8px;
+            background: var(--primary-glow);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 0 10px var(--primary-glow), 0 0 20px var(--primary-glow);
+        }
+
+        /* ==================== HEADER ==================== */
+        header {
+            background: linear-gradient(180deg, #000 0%, var(--panel-bg) 100%);
+            border-bottom: 2px solid var(--primary-glow);
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-glow), var(--secondary-glow), var(--primary-glow), transparent);
+        }
+
+        header h1 {
+            color: var(--primary-glow);
+            font-family: 'Nosifer', sans-serif;
+            font-size: 2.5rem;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 255, 102, 0.7), 0 0 40px rgba(0, 255, 102, 0.3);
+            position: relative;
+            animation: glitch-text 3s infinite;
+        }
+
+        @keyframes glitch-text {
+            0%, 100% { text-shadow: 0 0 20px rgba(0, 255, 102, 0.7); }
+            50% { text-shadow: -2px 0 var(--danger-glow), 2px 0 var(--primary-glow); }
+        }
+
+        header p {
+            font-size: 0.85rem;
+            color: var(--secondary-glow);
+            margin-top: 8px;
+            letter-spacing: 4px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 15px;
+            font-size: 0.7rem;
+            color: var(--text-color);
+            letter-spacing: 2px;
+        }
+
+        .status-bar span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-bar .pulse {
+            width: 8px; height: 8px;
+            background: var(--primary-glow);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.5); }
+        }
+
+        /* ==================== CONTAINER & NAV ==================== */
+        .container {
+            display: flex;
+            min-height: calc(100vh - 120px);
+        }
+
+        nav {
+            width: 280px;
+            background-color: rgba(10, 10, 10, 0.95);
+            border-right: 1px solid var(--border-color);
+            padding: 25px 15px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .nav-brand {
+            text-align: center;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 25px;
+        }
+
+        .nav-brand i {
+            font-size: 3rem;
+            color: var(--primary-glow);
+            text-shadow: 0 0 20px rgba(0, 255, 102, 0.5);
+            margin-bottom: 10px;
+            display: block;
+            animation: brain-beat 2.5s infinite ease-in-out;
+        }
+
+        @keyframes brain-beat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); text-shadow: 0 0 30px rgba(0, 255, 102, 0.8); }
+        }
+
+        .nav-brand .brand-text {
+            font-family: 'Nosifer', sans-serif;
+            color: var(--primary-glow);
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+        }
+
+        .nav-brand .brand-sub {
+            color: var(--danger-glow);
+            font-size: 0.65rem;
+            letter-spacing: 4px;
+            margin-top: 5px;
+        }
+
+        nav button {
+            display: block;
+            width: 100%;
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-color);
+            padding: 15px 20px;
+            text-align: left;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 2px;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        nav button::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0;
+            width: 3px; height: 100%;
+            background: var(--primary-glow);
+            transform: scaleY(0);
+            transition: transform 0.3s;
+        }
+
+        nav button:hover::before,
+        nav button.active::before {
+            transform: scaleY(1);
+        }
+
+        nav button:hover, nav button.active {
+            color: var(--primary-glow);
+            background: rgba(0, 255, 102, 0.05);
+            border: 1px solid rgba(0, 255, 102, 0.3);
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.1);
+            padding-left: 30px;
+        }
+
+        nav button i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-color);
+            letter-spacing: 2px;
+        }
+
+        .nav-footer .skull {
+            color: var(--danger-glow);
+            font-size: 1.5rem;
+            animation: skull-pulse 2s infinite;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        @keyframes skull-pulse {
+            0%, 100% { opacity: 1; text-shadow: 0 0 10px var(--danger-glow); }
+            50% { opacity: 0.3; }
+        }
+
+        /* ==================== MAIN CONTENT ==================== */
+        main {
+            flex: 1;
+            padding: 40px;
+            background: radial-gradient(circle at center, #0d0d0d 0%, #030303 100%);
+            position: relative;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.6s ease-in-out forwards;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); filter: blur(5px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        h2 {
+            color: var(--text-bright);
+            border-bottom: 1px solid var(--primary-glow);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            font-family: 'Nosifer', sans-serif;
+            letter-spacing: 4px;
+            text-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        h2 i {
+            color: var(--danger-glow);
+            font-size: 1.5rem;
+        }
+
+        /* ==================== PROFILE CARD ==================== */
+        .profile-card {
+            background-color: rgba(10, 10, 10, 0.8);
+            border: 1px solid var(--primary-glow);
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 700px;
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.1), inset 0 0 30px rgba(0, 255, 102, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-card::before {
+            content: "SECURE IDENTITY // CLASSIFIED";
+            position: absolute;
+            top: -1px;
+            right: 30px;
+            background: var(--bg-color);
+            padding: 5px 15px;
+            font-size: 0.7rem;
+            color: var(--primary-glow);
+            letter-spacing: 3px;
+            border: 1px solid var(--primary-glow);
+            border-top: none;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .profile-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow), var(--danger-glow), var(--primary-glow));
+            background-size: 300% 100%;
+            animation: gradient-shift 4s linear infinite;
+        }
+
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .profile-avatar {
+            width: 130px;
+            height: 130px;
+            border: 3px solid var(--primary-glow);
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.3);
+            animation: avatar-pulse 3s infinite ease-in-out;
+        }
+
+        @keyframes avatar-pulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 102, 0.3); }
+            50% { box-shadow: 0 0 50px rgba(0, 255, 102, 0.6); }
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-avatar .avatar-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.85);
+            text-align: center;
+            font-size: 0.65rem;
+            color: var(--primary-glow);
+            letter-spacing: 3px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .profile-info h3 {
+            color: var(--text-bright);
+            font-size: 1.8rem;
+            font-family: 'Nosifer', sans-serif;
+            letter-spacing: 3px;
+            text-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+        }
+
+        .profile-info .role {
+            color: var(--primary-glow);
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            margin-top: 8px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .profile-info .location {
+            color: var(--text-color);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        .profile-bio {
+            font-size: 0.95rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            color: var(--text-color);
+            line-height: 2;
+            border-left: 3px solid var(--primary-glow);
+            padding-left: 20px;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .p-stat {
+            background: rgba(0, 255, 102, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.4s;
+        }
+
+        .p-stat:hover {
+            border-color: var(--primary-glow);
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .p-stat .num {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: var(--primary-glow);
+            text-shadow: 0 0 15px rgba(0, 255, 102, 0.5);
+        }
+
+        .p-stat .lbl {
+            font-size: 0.75rem;
+            color: var(--text-color);
+            margin-top: 8px;
+            letter-spacing: 2px;
+        }
+
+        /* ==================== HACKER IMAGE SECTION ==================== */
+        .hacker-showcase {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .hacker-card {
+            background: rgba(10, 10, 10, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.5s;
+            position: relative;
+        }
+
+        .hacker-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .hacker-card:hover::before { opacity: 1; }
+
+        .hacker-card:hover {
+            border-color: var(--primary-glow);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 255, 102, 0.1);
+            transform: translateY(-8px) scale(1.02);
+        }
+
+        .hacker-card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .hacker-card:hover img {
+            transform: scale(1.1);
+        }
+
+        .hacker-card .hacker-info {
+            padding: 20px;
+        }
+
+        .hacker-card .hacker-info h4 {
+            color: var(--text-bright);
+            font-family: 'Nosifer', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .hacker-card .hacker-info p {
+            color: var(--text-color);
+            font-size: 0.85rem;
+            line-height: 1.7;
+        }
+
+        /* ==================== ARCHIVE GRID ==================== */
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .archive-item {
+            background-color: rgba(10, 10, 10, 0.6);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 12px;
+            transition: all 0.5s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .archive-item::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow));
+            transform: scaleX(0);
+            transition: transform 0.4s;
+        }
+
+        .archive-item:hover::before { transform: scaleX(1); }
+
+        .archive-item:hover {
+            border-color: var(--secondary-glow);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 229, 255, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .media-placeholder {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            border: 1px dashed #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #444;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .media-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .media-placeholder .play-icon {
+            position: absolute;
+            font-size: 3rem;
+            color: var(--primary-glow);
+            opacity: 0.8;
+            text-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .archive-item h4 {
+            color: var(--text-bright);
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+        }
+
+        .archive-item p {
+            font-size: 0.85rem;
+            color: var(--text-color);
+            line-height: 1.7;
+        }
+
+        .archive-item .meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            color: #555;
+        }
+
+        /* ==================== ADMIN PANEL ==================== */
+        .admin-panel {
+            margin-top: 40px;
+            border: 1px dashed var(--danger-glow);
+            padding: 30px;
+            background: rgba(255, 0, 60, 0.03);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .admin-panel::before {
+            content: '⚠ ADMIN ONLY';
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 0.7rem;
+            color: var(--danger-glow);
+            letter-spacing: 3px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .admin-panel h3 {
+            color: var(--danger-glow);
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-family: 'Nosifer', sans-serif;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(255, 0, 60, 0.3);
+        }
+
+        .upload-btn {
+            background: none;
+            border: 2px solid var(--primary-glow);
+            color: var(--primary-glow);
+            padding: 12px 30px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 3px;
+            transition: all 0.4s;
+            border-radius: 8px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .upload-btn:hover {
+            background: var(--primary-glow);
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .upload-btn i {
+            margin-right: 10px;
+        }
+
+        /* ==================== TERMINAL ==================== */
+        .terminal-box {
+            background-color: #000;
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            font-size: 0.9rem;
+            color: var(--primary-glow);
+            height: 300px;
+            overflow-y: auto;
+            border-radius: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            position: relative;
+        }
+
+        .terminal-box::before {
+            content: 'root@psyche-matrix:~# _';
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #333;
+            font-size: 0.75rem;
+        }
+
+        .terminal-line {
+            margin-bottom: 8px;
+            opacity: 0;
+            animation: line-in 0.3s forwards;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .terminal-line::before {
+            content: '>';
+            position: absolute;
+            left: 0;
+            color: var(--danger-glow);
+        }
+
+        .terminal-line .time {
+            color: var(--purple-glow);
+            margin-right: 12px;
+        }
+
+        .terminal-line .err { color: var(--danger-glow); }
+        .terminal-line .ok { color: var(--primary-glow); }
+        .terminal-line .warn { color: #ff9500; }
+        .terminal-line .info { color: var(--secondary-glow); }
+
+        @keyframes line-in {
+            to { opacity: 1; }
+        }
+
+        /* ==================== DOWNLOAD LINKS ==================== */
+        .download-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            color: var(--secondary-glow);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--secondary-glow);
+            padding-bottom: 3px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .download-link:hover {
+            color: var(--text-bright);
+            border-bottom-color: var(--text-bright);
+            text-shadow: 0 0 10px var(--secondary-glow);
+        }
+
+        /* ==================== MANIFESTO ==================== */
+        .manifesto-box {
+            background-color: rgba(10, 10, 10, 0.6);
+            padding: 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .manifesto-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow), var(--danger-glow));
+        }
+
+        .manifesto-box .quote {
+            color: var(--secondary-glow);
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            font-family: 'Creepster', cursive;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+        }
+
+        .manifesto-box p {
+            font-size: 1rem;
+            color: var(--text-color);
+            line-height: 2.2;
+            margin-bottom: 20px;
+        }
+
+        .manifesto-box .warning-text {
+            color: var(--danger-glow);
+            font-family: 'Nosifer', sans-serif;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-top: 30px;
+            letter-spacing: 3px;
+            text-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
+            animation: warning-blink 2s infinite;
+        }
+
+        @keyframes warning-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ==================== ACCESS DENIED ==================== */
+        .access-denied {
+            background: rgba(255, 0, 60, 0.05);
+            border: 1px solid var(--danger-glow);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .access-denied i {
+            font-size: 3rem;
+            color: var(--danger-glow);
+            margin-bottom: 15px;
+            animation: danger-pulse 1.5s infinite;
+        }
+
+        @keyframes danger-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        .access-denied h4 {
+            color: var(--danger-glow);
+            font-family: 'Nosifer', sans-serif;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+
+        .access-denied p {
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
+        /* ==================== MODAL ==================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-box {
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid var(--primary-glow);
+            border-radius: 20px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(0, 255, 102, 0.2);
+        }
+
+        .modal-head {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-head h3 {
+            color: var(--primary-glow);
+            font-family: 'Nosifer', sans-serif;
+            letter-spacing: 3px;
+        }
+
+        .modal-close {
+            background: none;
+            border: 2px solid var(--danger-glow);
+            color: var(--danger-glow);
+            width: 35px; height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: var(--danger-glow);
+            color: #fff;
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+
+        .modal-body img, .modal-body video {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        /* ==================== TOAST ==================== */
+        .toast-dock {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 10001;
+        }
+
+        .toast-msg {
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid var(--primary-glow);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            animation: toast-in 0.4s ease-out;
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.2);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .toast-msg.danger {
+            border-color: var(--danger-glow);
+            box-shadow: 0 0 30px rgba(255, 0, 60, 0.2);
+        }
+
+        @keyframes toast-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ==================== SCROLLBAR ==================== */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-glow); }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 1024px) {
+            .container { flex-direction: column; }
+            nav { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid var(--border-color); }
+            .hacker-showcase { grid-template-columns: 1fr; }
+            .profile-stats { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.5rem; }
+            .profile-header { flex-direction: column; text-align: center; }
+            .archive-grid { grid-template-columns: 1fr; }
+            main { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix Canvas -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- Effects -->
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="blood-drip" style="left: 8%; animation-delay: 0s;"></div>
+    <div class="blood-drip" style="left: 25%; animation-delay: 3s;"></div>
+    <div class="blood-drip" style="left: 72%; animation-delay: 6s;"></div>
+    <div class="blood-drip" style="left: 90%; animation-delay: 1.5s;"></div>
+
+    <!-- Header -->
+    <header>
+        <h1>PSYCHE MATRIX // ARCHIVE</h1>
+        <p>STATUS: ENCRYPTED // ACCESS: GRANTED</p>
+        <div class="status-bar">
+            <span><span class="pulse"></span> SYSTEM ONLINE</span>
+            <span><i class="fas fa-shield-alt" style="color: var(--primary-glow);"></i> FIREWALL ACTIVE</span>
+            <span><i class="fas fa-database" style="color: var(--secondary-glow);"></i> DB: CONNECTED</span>
+            <span><i class="fas fa-user-secret" style="color: var(--danger-glow);"></i> VISITOR LOGGED</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <nav>
+            <div class="nav-brand">
+                <i class="fas fa-brain"></i>
+                <div class="brand-text">PSYCHE MATRIX</div>
+                <div class="brand-sub">ARCHIVES</div>
+            </div>
+
+            <button class="tab-link active" onclick="openPage(event, 'identity')">
+                <i class="fas fa-fingerprint"></i> [01] IDENTITY
+            </button>
+            <button class="tab-link" onclick="openPage(event, 'visuals')">
+                <i class="fas fa-image"></i> [02] PSYCHO VISUALS
+            </button>
+            <button class="tab-link" onclick="openPage(event, 'intel')">
+                <i class="fas fa-file-pdf"></i> [03] INTEL PDFs
+            </button>
+            <button class="tab-link" onclick="openPage(event, 'terminal')">
+                <i class="fas fa-terminal"></i> [04] SYSTEM LOGS
+            </button>
+            <button class="tab-link" onclick="openPage(event, 'manifesto')">
+                <i class="fas fa-scroll"></i> [05] MANIFESTO
+            </button>
+            <button class="tab-link" onclick="openPage(event, 'hacker')">
+                <i class="fas fa-user-secret"></i> [06] DARK OPS
+            </button>
+            <button class="tab-link" onclick="openPage(event, 'upload')">
+                <i class="fas fa-upload"></i> [07] INJECT FILES
+            </button>
+
+            <div class="nav-footer">
+                <span class="skull">&#9760;</span>
+                <p>ALL ACCESS LOGGED</p>
+                <p style="margin-top: 5px; color: var(--danger-glow);">UNAUTHORIZED ENTRY = DEATH</p>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main>
+            <!-- PAGE 1: IDENTITY -->
+            <div id="identity" class="tab-content active">
+                <h2><i class="fas fa-fingerprint"></i> OPERATOR IDENTITY</h2>
+
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <!-- আপনার ছবি এখানে লাগান - নিচের src পরিবর্তন করুন -->
+                              <img src="/Screenshot_20260620-195431 (2).png" alt="operator" id="profile-img">
+                            <div class="avatar-overlay">‌OPERATOR</div>
+                        </div>
+                        <div class="profile-info">
+                            <h3>ROBIUL HASAN</h3>
+                            <div class="role">Lead Architect & Cyber Psychologist</div>
+                            <div class="location"><i class="fas fa-map-marker-alt"></i> Bogura, Bangladesh</div>
+                        </div>
+                    </div>
+
+<div class="hero-content">
+            <div class="hero-badge">            <div class="hero-buttons">
+                <a href="https://www.facebook.com/profile.php?id=61579469022368" class="btn-primary">
+                    <i class="fab fa-facebook"></i>WEBSITE OPERATOR <br>
+ <a href="https://www.facebook.com/share/1H6kSDhYPT/" class="btn-primary">
+                    <i class="fab fa-facebook"></i>KAMRUL
+                </a>
+            </div>
+        </div>
+
+                    <div class="profile-bio">
+                        "মনস্তত্ত্ব এবং সাইবার স্পেসের অন্ধকার কোণ নিয়ে কাজ করাই আমার মূল লক্ষ্য। এই ডোমেইনে মানব মস্তিষ্কের জটিল আচরণ এবং ডিজিটাল সিকিউরিটি আর্ট ফাইলের সংগ্রহশালা রয়েছে। আমি মানুষের মনের গভীরতম রহস্য উন্মোচন করতে চাচ্ছি।"
+                        <p>"The human mind is the ultimate system to exploit."</p>
+                    </div>
+                    <div class="profile-stats">
+                        <div class="p-stat">
+                            <div class="num" id="stat-files">0</div>
+                            <div class="lbl">ARCHIVED FILES</div>
+                        </div>
+                        <div class="p-stat">
+                            <div class="num" id="stat-photos">0</div>
+                            <div class="lbl">VISUAL RECORDS</div>
+                        </div>                      
+        </div>
+                </div>
+                </div>                    
+                </div>
+            </div>
+            <!-- PAGE 2: PSYCHO VISUALS -->
+            <div id="visuals" class="tab-content">
+                <h2><i class="fas fa-image"></i> PSYCHO VISUAL SUB-SYSTEM</h2>
+
+                <div class="access-denied">
+                    <i class="fas fa-eye-slash"></i>
+                    <h4>SURVEILLANCE MODE</h4>
+                    <p>Visitors possess read-only privileges. Upload capabilities are strictly reserved for the Operator.<br>All viewing activity is logged and monitored.</p>
+                </div>
+
+                <div class="archive-grid" id="visuals-grid">
+                    <div class="archive-item">
+                        <div class="media-placeholder">
+                            <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&h=400&fit=crop" alt="Neural Network">
+                        </div>
+                        <h4>Neural Pathway Mapping</h4>
+                        <p>মানুষের সাবকনশাস মাইন্ড কীভাবে কাজ করে তার একটি ভিজ্যুয়াল প্রেজেন্টেশন।</p>
+                        <div class="meta">
+                            <span><i class="fas fa-image"></i> JPG</span>
+                            <span><i class="fas fa-calendar"></i> 2024-01-15</span>
+                        </div>
+                    </div>
+                    <div class="archive-item">
+                        <div class="media-placeholder">
+                            <img src="https://images.unsplash.com/photo-1530497610245-94d3c16cda28?w=600&h=400&fit=crop" alt="MRI Scan">
+                        </div>
+                        <h4>MRI Schizophrenia Analysis</h4>
+                        <p>সিজোফ্রেনিয়া রোগীর মস্তিষ্কের অস্বাভাবিক অ্যাক্টিভিটি ম্যাপিং।</p>
+                        <div class="meta">
+                            <span><i class="fas fa-image"></i> JPG</span>
+                            <span><i class="fas fa-calendar"></i> 2024-02-14</span>
+                        </div>
+                    </div>
+                    <div class="archive-item">
+                        <div class="media-placeholder">
+                            <img src="https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&h=400&fit=crop" alt="Amygdala">
+                        </div>
+                        <h4>Amygdala Fear Response</h4>
+                        <p>ভয়ের প্রতিক্রিয়ায় অ্যামিগডালা অ্যাক্টিভেশন ভিজ্যুয়ালাইজেশন।</p>
+                        <div class="meta">
+                            <span><i class="fas fa-image"></i> JPG</span>
+                            <span><i class="fas fa-calendar"></i> 2024-03-10</span>
+                        </div>
+                    </div>
+                    <div class="archive-item">
+                        <div class="media-placeholder">
+                            <i class="fas fa-play-circle play-icon"></i>
+                            <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=600&h=400&fit=crop" alt="Session" style="opacity: 0.6;">
+                        </div>
+                        <h4>Session 47 - Subject M</h4>
+                        <p>হিপনোথেরাপি সেশন - সাবজেক্ট M রিগ্রেশন থেরাপি রেকর্ডিং।</p>
+                        <div class="meta">
+                            <span><i class="fas fa-video"></i> MP4</span>
+                            <span><i class="fas fa-calendar"></i> 2024-01-22</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 3: INTEL PDFs -->
+            <div id="intel" class="tab-content">
+                <h2><i class="fas fa-file-pdf"></i> INTEL & DOCUMENTATION</h2>
+
+                <div class="access-denied">
+                    <i class="fas fa-lock"></i>
+                    <h4>CLASSIFIED DOCUMENTS</h4>
+                    <p>These documents contain sensitive psychological research data.<br>Distribution is strictly prohibited under penalty of law.</p>
+                </div>
+
+                <div class="archive-grid">
+                    <div class="archive-item">
+                        <div class="media-placeholder" style="background: linear-gradient(135deg, #1a0000 0%, #0a0000 100%);">
+                            <i class="fas fa-file-pdf" style="font-size: 4rem; color: var(--danger-glow);"></i>
+                        </div>
+                        <h4>Dark_Psychology_Essentials.pdf</h4>
+                        <p>মানসিক ম্যানিপুলেশন এবং ডার্ক সাইকোলজির মৌলিক তত্ত্ব।</p>
+                        <div class="meta">
+                            <span><i class="fas fa-hdd"></i> 4.2 MB</span>
+                            <span><i class="fas fa-calendar"></i> 2024-02-05</span>
+                        </div>
+                        <a href="#" class="download-link" onclick="showToast('Download started', 'success')"><i class="fas fa-download"></i> DOWNLOAD FILE</a>
+                    </div>
+                    <div class="archive-item">
+                        <div class="media-placeholder" style="background: linear-gradient(135deg, #001a1a 0%, #000a0a 100%);">
+                            <i class="fas fa-file-archive" style="font-size: 4rem; color: var(--secondary-glow);"></i>
+                        </div>
+                        <h4>Cyber_Behavioral_Analysis.zip</h4>
+                        <p>সাইবার স্পেসে মানব আচরণের বিস্তারিত এনালাইসিস রিপোর্ট।</p>
+                        <div class="meta">
+                            <span><i class="fas fa-hdd"></i> 12.8 MB</span>
+                            <span><i class="fas fa-calendar"></i> 2024-02-20</span>
+                        </div>
+                        <a href="#" class="download-link" onclick="showToast('Download started', 'success')"><i class="fas fa-download"></i> DOWNLOAD FILE</a>
+                    </div>
+                    <div class="archive-item">
+                        <div class="media-placeholder" style="background: linear-gradient(135deg, #1a001a 0%, #0a000a 100%);">
+                            <i class="fas fa-file-pdf" style="font-size: 4rem; color: var(--purple-glow);"></i>
+                        </div>
+                        <h4>Psychological_Warfare_Manual.pdf</h4>
+                        <p>CIA ডিক্লাসিফাইড মাইন্ড কন্ট্রোল রিসার্চ ডকুমেন্টস।</p>
+                        <div class="meta">
+                            <span><i class="fas fa-hdd"></i> 5.4 MB</span>
+                            <span><i class="fas fa-calendar"></i> 2024-03-15</span>
+                        </div>
+                        <a href="#" class="download-link" onclick="showToast('Download started', 'success')"><i class="fas fa-download"></i> DOWNLOAD FILE</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 4: SYSTEM LOGS -->
+            <div id="terminal" class="tab-content">
+                <h2><i class="fas fa-terminal"></i> CORE TERMINAL LOGS</h2>
+
+                <div class="terminal-box" id="main-terminal">
+                    <div class="terminal-line"><span class="time">[INIT]</span> <span class="ok">Initializing Matrix Connection...</span></div>
+                    <div class="terminal-line"><span class="time">[SYSTEM]</span> <span class="ok">Firewall Status: BYPASSED</span></div>
+                    <div class="terminal-line"><span class="time">[SECURITY]</span> <span class="warn">Database Security: READ-ONLY FOR PUBLIC USERS</span></div>
+                    <div class="terminal-line"><span class="time">[LOG]</span> <span class="info">Visitor IP: logged_successfully</span></div>
+                    <div class="terminal-line"><span class="time">[ALERT]</span> <span class="err">Warning: Unauthorized post requests will be dropped by default.</span></div>
+                    <div class="terminal-line"><span class="time">[SYSTEM]</span> <span class="ok">Ready for Core Node Deployment...</span></div>
+                    <div class="terminal-line"><span class="time">[NETWORK]</span> <span class="info">Neural network: ONLINE</span></div>
+                    <div class="terminal-line"><span class="time">[SURVEILLANCE]</span> <span class="warn">Eye tracking systems: ACTIVE</span></div>
+                    <div class="terminal-line"><span class="time">[DATABASE]</span> <span class="ok">Archive loaded: 12 files</span></div>
+                    <div class="terminal-line"><span class="time">[CRYPTO]</span> <span class="info">Encryption: AES-256</span></div>
+                </div>
+            </div>
+
+            <!-- PAGE 5: MANIFESTO -->
+            <div id="manifesto" class="tab-content">
+                <h2><i class="fas fa-scroll"></i> THE MANIFESTO</h2>
+
+                <div class="manifesto-box">
+                    <div class="quote">// THE TRUTH BEHIND THE SHADOWS</div>
+                    <p>
+                        ডিজিটাল দুনিয়া এবং মানুষের সাইকোলজি দুটোই একই সূত্রে গাঁথা—ইনপুট এবং আউটপুট। আমরা এখানে মানুষের মনের অবচেতন স্তরের ডাটা এনালাইসিস এবং ডার্ক থিওরিগুলো নিয়ে বৈজ্ঞানিক ও প্রফেশনাল আলোচনা করি।
+                    </p>
+                    <p>
+                        প্রতিটি মানুষের মনের গভীরে একটি অন্ধকার কোণ আছে যেখানে সে তার সবচেয়ে গোপন ভয়, আকাঙ্ক্ষা এবং ইচ্ছা লুকিয়ে রাখে। আমাদের কাজ হলো সেই অন্ধকার কোণ আলোকিত করা—নয়তো সেটাকে আরও গভীর করে তোলা।
+                    </p>
+                    <p style="color: var(--text-color);">
+                        "The human mind is the ultimate system to exploit. Once you understand the architecture, you can rewrite the code."
+                    </p>
+                    <div class="warning-text">THE ABYSS STARES BACK</div>
+                </div>
+            </div>
+
+            <!-- PAGE 6: DARK OPS (HACKER IMAGES) -->
+            <div id="hacker" class="tab-content">
+                <h2><i class="fas fa-user-secret"></i> DARK OPERATIONS</h2>
+
+                <p style="color: var(--text-color); margin-bottom: 25px; line-height: 1.8;">
+                    ডার্ক ওয়েব এবং সাইবার স্পেসের অন্ধকার দিকের একটি ভিজ্যুয়াল ডকুমেন্টেশন। এখানে হ্যাকার কালচার, সাইবার সিকিউরিটি এবং ডিজিটাল মনস্তত্ত্বের সংযোগস্থল তুলে ধরা হয়েছে।
+                </p>
+
+                <div class="hacker-showcase">
+                    <div class="hacker-card">
+                        <img src="https://kimi-web-img.moonshot.cn/img/thumbs.dreamstime.com/02646666ccf77ae76f944bf46fd54437c95c5a5f.jpg" alt="Cyberpunk Hacker">
+                        <div class="hacker-info">
+                            <h4>THE COMMAND CENTER</h4>
+                            <p>নিয়ন-লিট হ্যাকার কমান্ড সেন্টার। একা অন্ধকারে বসে পুরো দুনিয়া নিয়ন্ত্রণ করা।</p>
+                        </div>
+                    </div>
+                    <div class="hacker-card">
+                        <img src="https://kimi-web-img.moonshot.cn/img/wallpapers.com/c5a315db7372bbad856c845c9f5875fa3892fb8d.jpg" alt="Hacker Mask">
+                        <div class="hacker-info">
+                            <h4>THE ANONYMOUS</h4>
+                            <p>নিয়ন গ্রিন হ্যাকার মাস্ক। পরিচয় লুকিয়ে সত্য উন্মোচন।</p>
+                        </div>
+                    </div>
+                    <div class="hacker-card">
+                        <img src="https://kimi-web-img.moonshot.cn/img/thumbs.dreamstime.com/e57e2f0361a4d12ad9e1e4ab79fe0809d0c2b1c2.jpg" alt="Matrix Code">
+                        <div class="hacker-info">
+                            <h4>THE MATRIX RAIN</h4>
+                            <p>ডিজিটাল কোডের বৃষ্টি। রিয়েলিটি কি শুধুই একটি সিমুলেশন?</p>
+                        </div>
+                    </div>
+                    <div class="hacker-card">
+                        <img src="https://kimi-web-img.moonshot.cn/img/images.stockcake.com/14dbc5a880111052a1523333bf1d7bd4e68b366c.jpg" alt="Retro Terminal">
+                        <div class="hacker-info">
+                            <h4>THE RETRO TERMINAL</h4>
+                            <p>পুরোনো CRT মনিটরে সবুজ গ্লো। পুরোনো স্কুল হ্যাকিং এর স্মৃতি।</p>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 7: INJECT FILES (UPLOAD) -->
+            <div id="upload" class="tab-content">
+                <h2><i class="fas fa-upload"></i> NEURAL INJECTION</h2>
+
+                <div class="inject-zone" id="inject-zone" onclick="document.getElementById('file-input').click()" style="border: 3px dashed rgba(0,255,102,0.2); border-radius: 20px; padding: 80px; text-align: center; cursor: pointer; background: rgba(0,255,102,0.02); transition: all 0.4s; margin-bottom: 30px;">
+                    <i class="fas fa-syringe" style="font-size: 4rem; color: var(--primary-glow); margin-bottom: 20px; display: block;"></i>
+                    <h3 style="color: var(--text-bright); font-family: 'Nosifer', sans-serif; margin-bottom: 15px; letter-spacing: 3px;">DROP FILES HERE</h3>
+                    <p style="color: var(--text-color);">Drag & drop or click to browse | Images, Videos, PDFs, Any File</p>
+                    <input type="file" id="file-input" multiple accept="*/*" onchange="handleFiles(this.files)" style="display: none;">
+                </div>
+
+                <div class="admin-panel">
+                    <h3><i class="fas fa-exclamation-triangle"></i> ADMIN CONTROL PANEL</h3>
+                    <p style="color: var(--text-color); margin-bottom: 15px; font-size: 0.9rem;">
+                        Only the Operator has write access. All injections are logged and encrypted.<br>
+                        Supported formats: JPG, PNG, MP4, PDF, ZIP, TXT, DOC
+                    </p>
+                    <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                        <i class="fas fa-upload"></i> INJECT INTO ARCHIVE
+                    </button>
+                </div>
+
+                <div class="terminal-box" id="upload-terminal" style="height: 150px; margin-top: 30px;">
+                    <div class="terminal-line"><span class="time">[READY]</span> <span class="ok">Neural injection chamber ready...</span></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div class="modal-head">
+                <h3 id="modal-title">VIEW FILE</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Toast Dock -->
+    <div class="toast-dock" id="toast-dock"></div>
+
+    <script>
+        // ==================== MATRIX RAIN ====================
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン☠⚡☣⚠◉▣◈✦';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+        for (let i = 0; i < columns; i++) drops[i] = Math.random() * -100;
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 35);
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+        // ==================== CURSOR TRAIL ====================
+        const trailDots = [];
+        for (let i = 0; i < 10; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'cursor-dot';
+            dot.style.width = (10 - i) + 'px';
+            dot.style.height = (10 - i) + 'px';
+            dot.style.opacity = 1 - i * 0.1;
+            document.body.appendChild(dot);
+            trailDots.push({ el: dot, x: 0, y: 0 });
+        }
+        document.addEventListener('mousemove', (e) => { trailDots[0].x = e.clientX; trailDots[0].y = e.clientY; });
+        function animateTrail() {
+            for (let i = trailDots.length - 1; i > 0; i--) {
+                trailDots[i].x += (trailDots[i-1].x - trailDots[i].x) * 0.3;
+                trailDots[i].y += (trailDots[i-1].y - trailDots[i].y) * 0.3;
+                trailDots[i].el.style.left = trailDots[i].x + 'px';
+                trailDots[i].el.style.top = trailDots[i].y + 'px';
+            }
+            trailDots[0].el.style.left = trailDots[0].x + 'px';
+            trailDots[0].el.style.top = trailDots[0].y + 'px';
+            requestAnimationFrame(animateTrail);
+        }
+        animateTrail();
+
+        // ==================== PAGE NAVIGATION ====================
+        function openPage(evt, pageName) {
+            const tabcontent = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabcontent.length; i++) tabcontent[i].classList.remove('active');
+            const tablinks = document.getElementsByClassName('tab-link');
+            for (let i = 0; i < tablinks.length; i++) tablinks[i].classList.remove('active');
+            document.getElementById(pageName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+            addTerminal(`Accessing sector: ${pageName.toUpperCase()}...`, 'info');
+        }
+
+        // ==================== TERMINAL LOGGING ====================
+        function addTerminal(message, type = 'info') {
+            const terminals = document.querySelectorAll('.terminal-box');
+            terminals.forEach(term => {
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+                line.innerHTML = `<span class="time">[${time}]</span> <span class="${type}">${message}</span>`;
+                term.appendChild(line);
+                term.scrollTop = term.scrollHeight;
+            });
+        }
+
+        // ==================== FILE UPLOAD ====================
+        const injectZone = document.getElementById('inject-zone');
+        if (injectZone) {
+            injectZone.addEventListener('dragover', (e) => { e.preventDefault(); injectZone.style.borderColor = 'var(--primary-glow)'; injectZone.style.background = 'rgba(0,255,102,0.05)'; });
+            injectZone.addEventListener('dragleave', () => { injectZone.style.borderColor = 'rgba(0,255,102,0.2)'; injectZone.style.background = 'rgba(0,255,102,0.02)'; });
+            injectZone.addEventListener('drop', (e) => { e.preventDefault(); injectZone.style.borderColor = 'rgba(0,255,102,0.2)'; injectZone.style.background = 'rgba(0,255,102,0.02)'; handleFiles(e.dataTransfer.files); });
+        }
+
+        function handleFiles(fileList) {
+            Array.from(fileList).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    addTerminal(`Injected: ${file.name} (${formatSize(file.size)})`, 'ok');
+                    showToast(`File injected: ${file.name}`, 'success');
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // ==================== TOAST ====================
+        function showToast(message, type = 'success') {
+            const dock = document.getElementById('toast-dock');
+            const toast = document.createElement('div');
+            toast.className = `toast-msg ${type === 'error' ? 'danger' : ''}`;
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            const color = type === 'success' ? 'var(--primary-glow)' : 'var(--danger-glow)';
+            toast.innerHTML = `<i class="fas ${icon}" style="color: ${color};"></i> <span>${message}</span>`;
+            dock.appendChild(toast);
+            setTimeout(() => { toast.style.animation = 'toast-in 0.4s ease-out reverse'; setTimeout(() => toast.remove(), 400); }, 3000);
+        }
+
+        // ==================== MODAL ====================
+        function closeModal(e) {
+            if (!e || e.target === document.getElementById('modal')) {
+                document.getElementById('modal').classList.remove('active');
+            }
+        }
+
+        // ==================== KEYBOARD ====================
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+        // ==================== INIT ====================
+        window.addEventListener('load', () => {
+            addTerminal('System initialized', 'ok');
+            addTerminal('Secure connection established', 'ok');
+            addTerminal('Visitor access detected', 'warn');
+            addTerminal('IP address logged', 'info');
+            setTimeout(() => addTerminal('WARNING: Unusual neural activity', 'err'), 5000);
+        });
+    </script>
+</body>
+</html>
